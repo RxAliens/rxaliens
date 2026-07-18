@@ -5,7 +5,7 @@ import Servers from "@/components/Servers";
 import Leaderboard from "@/components/Leaderboard";
 import Features from "@/components/Features";
 import Footer from "@/components/Footer";
-
+import AuroraBackground from "@/components/effects/AuroraBackground";
 import Background from "@/components/Background";
 import VideoBackground from "@/components/VideoBackground";
 import MouseGlow from "@/components/effects/MouseGlow";
@@ -15,8 +15,10 @@ export default function Home() {
     <>
       {/* Efektler */}
       <MouseGlow />
+      <AuroraBackground />
       <Background />
       <VideoBackground />
+      
 
       {/* Navbar */}
       <Navbar />
