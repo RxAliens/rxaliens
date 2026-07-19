@@ -1,251 +1,983 @@
 "use client";
 
-import Image from "next/image";
-import {
-  Activity,
-  Cpu,
-  Globe,
-  Users,
-} from "lucide-react";
+import { useEffect, useState } from "react";
+import SectionTitle from "./ui/SectionTitle";
+import FadeUp from "./animations/FadeUp";
 
-import GlowCard from "@/components/ui/GlowCard";
-import SectionTitle from "@/components/ui/SectionTitle";
-import PrimaryButton from "@/components/ui/PrimaryButton";
+
 
 const servers = [
-  {
-    name: "Competitive #1",
-    image: "/maps/mirage.jpg",
-    map: "Mirage",
-    players: 18,
-    maxPlayers: 20,
-    tick: "128 Tick",
-    region: "İstanbul",
-    ping: "12 ms",
-  },
-  {
-    name: "Premier #1",
-    image: "/maps/ancient.jpg",
-    map: "Ancient",
-    players: 10,
-    maxPlayers: 10,
-    tick: "128 Tick",
-    region: "İstanbul",
-    ping: "14 ms",
-  },
-  {
-    name: "Deathmatch",
-    image: "/maps/dust2.jpg",
-    map: "Dust II",
-    players: 28,
-    maxPlayers: 32,
-    tick: "128 Tick",
-    region: "Frankfurt",
-    ping: "31 ms",
-  },
-  {
-    name: "Retake Arena",
-    image: "/maps/inferno.jpg",
-    map: "Inferno",
-    players: 14,
-    maxPlayers: 16,
-    tick: "128 Tick",
-    region: "İstanbul",
-    ping: "18 ms",
-  },
+
+{
+id:"server1",
+host:"185.193.165.123",
+port:27015
+},
+
+{
+id:"server2",
+host:"185.193.165.18",
+port:27015
+},
+
+{
+id:"server3",
+host:"185.193.165.20",
+port:27015
+},
+
+{
+id:"server4",
+host:"185.193.165.22",
+port:27015
+}
+
 ];
 
-export default function Servers() {
-  return (
-    <section
-      id="servers"
-      className="relative py-28"
-    >
-      <div className="absolute right-0 top-0 h-96 w-96 rounded-full bg-cyan-500/10 blur-[170px]" />
 
-      <div className="relative mx-auto max-w-7xl px-6">
 
-        <SectionTitle
-          badge="SUNUCULAR"
-          title="Aktif Counter-Strike Sunucuları"
-          description="128 Tick altyapısı, düşük ping ve profesyonel rekabet deneyimi."
-        />
 
-        <div className="grid gap-8 lg:grid-cols-2">
 
-          {servers.map((server) => {
 
-            const percent =
-              (server.players / server.maxPlayers) * 100;
+function getMapImage(map:string){
 
-            return (
 
-              <GlowCard
-                key={server.name}
-                className="overflow-hidden"
-              >
+if(!map)
+return "maps/default.jpg";
 
-                {/* MAP */}
 
-                <div className="relative h-56 overflow-hidden">
 
-                  <Image
-                    src={server.image}
-                    alt={server.map}
-                    fill
-                    className="object-cover transition duration-700 group-hover:scale-110"
-                  />
+const name =
+map
+.toLowerCase()
+.replace("de_","")
+.replace("cs_","")
+.replace("workshop/","")
+.replace(/[^a-z0-9_]/g,"");
 
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#05070B] via-[#05070B]/20 to-transparent" />
 
-                  <div className="absolute left-6 top-6">
 
-                    <span className="rounded-full bg-emerald-500/90 px-4 py-2 text-sm font-bold text-white">
-                      ● ÇEVRİMİÇİ
-                    </span>
+return `maps/${name}.jpg`;
 
-                  </div>
+}
 
-                  <div className="absolute bottom-6 left-6">
 
-                    <h3 className="text-3xl font-black text-white">
 
-                      {server.name}
 
-                    </h3>
 
-                    <p className="mt-1 text-cyan-300">
 
-                      {server.map}
 
-                    </p>
 
-                  </div>
 
-                </div>
+export default function Servers(){
 
-                {/* CONTENT */}
 
-                <div className="p-8">
 
-                  <div className="grid grid-cols-2 gap-5">
+const [data,setData] =
+useState<any>({});
 
-                    <div>
 
-                      <Users className="mb-2 text-cyan-400" />
 
-                      <p className="text-sm text-gray-500">
-                        Oyuncular
-                      </p>
 
-                      <h4 className="text-2xl font-bold text-white">
 
-                        {server.players}/{server.maxPlayers}
 
-                      </h4>
 
-                    </div>
+useEffect(()=>{
 
-                    <div>
 
-                      <Cpu className="mb-2 text-cyan-400" />
+const load = async()=>{
 
-                      <p className="text-sm text-gray-500">
-                        Tickrate
-                      </p>
 
-                      <h4 className="text-2xl font-bold text-white">
+for(const server of servers){
 
-                        {server.tick}
 
-                      </h4>
+try{
 
-                    </div>
 
-                    <div>
+const res =
+await fetch(
 
-                      <Globe className="mb-2 text-cyan-400" />
+`/api/server-status?id=${server.id}&host=${server.host}&port=${server.port}`,
 
-                      <p className="text-sm text-gray-500">
-                        Bölge
-                      </p>
+{
+cache:"no-store"
+}
 
-                      <h4 className="text-xl font-bold text-white">
+);
 
-                        {server.region}
 
-                      </h4>
 
-                    </div>
+const json =
+await res.json();
 
-                    <div>
 
-                      <Activity className="mb-2 text-cyan-400" />
 
-                      <p className="text-sm text-gray-500">
-                        Ortalama Ping
-                      </p>
 
-                      <h4 className="text-xl font-bold text-white">
 
-                        {server.ping}
+setData((old:any)=>({
 
-                      </h4>
+...old,
 
-                    </div>
+[server.id]:json
 
-                  </div>
+}));
 
-                  {/* Progress */}
 
-                  <div className="mt-8">
 
-                    <div className="mb-2 flex justify-between text-sm">
 
-                      <span className="text-gray-400">
-                        Doluluk
-                      </span>
 
-                      <span className="font-bold text-cyan-400">
+}catch(error){
 
-                        %{Math.round(percent)}
+console.log(error);
 
-                      </span>
+}
 
-                    </div>
 
-                    <div className="h-3 overflow-hidden rounded-full bg-white/10">
+}
 
-                      <div
-                        className="h-full rounded-full bg-cyan-400 transition-all duration-700"
-                        style={{
-                          width: `${percent}%`,
-                        }}
-                      />
 
-                    </div>
+};
 
-                  </div>
 
-                  <PrimaryButton
-                    href="#"
-                    className="mt-8 w-full"
-                  >
-                    Sunucuya Katıl
-                  </PrimaryButton>
 
-                </div>
 
-              </GlowCard>
+load();
 
-            );
 
-          })}
 
-        </div>
+const timer =
+setInterval(load,10000);
 
-      </div>
 
-    </section>
-  );
+
+return()=>clearInterval(timer);
+
+
+
+},[]);
+
+
+
+
+
+
+
+
+
+
+return(
+
+
+<section
+
+id="servers"
+
+className="
+pt-32
+pb-24
+"
+
+>
+
+
+
+<FadeUp>
+
+<SectionTitle
+
+badge="SUNUCULAR"
+
+title="Aktif Counter-Strike Sunucuları"
+
+description="128 Tick altyapısı, düşük ping ve profesyonel rekabet deneyimi"
+
+/>
+
+</FadeUp>
+
+
+
+
+
+
+
+<div
+
+className="
+mt-14
+grid
+grid-cols-1
+md:grid-cols-2
+gap-8
+max-w-6xl
+mx-auto
+"
+
+>
+
+
+
+{
+
+
+servers.map((server,index)=>{
+
+
+
+const info =
+data[server.id];
+
+
+
+
+
+const percent =
+Math.min(
+
+100,
+
+Math.round(
+
+((info?.players ?? 0) /
+
+(info?.maxPlayers || 1))
+
+*100
+
+)
+
+);
+
+
+
+
+
+const online =
+info?.online ?? false;
+
+
+
+
+
+const barColor =
+
+percent >= 80
+
+?
+
+"bg-red-500"
+
+:
+
+percent >= 50
+
+?
+
+"bg-yellow-400"
+
+:
+
+"bg-cyan-400";
+
+
+
+
+
+const pingColor =
+
+(info?.ping ?? 0) <= 30
+
+?
+
+"text-emerald-400"
+
+:
+
+(info?.ping ?? 0) <= 70
+
+?
+
+"text-yellow-400"
+
+:
+
+"text-red-400";
+
+
+
+
+
+
+
+return(
+
+
+<FadeUp
+
+delay={index * 0.15}
+
+key={server.id}
+
+>
+
+
+
+
+<div
+
+className="
+overflow-hidden
+rounded-3xl
+border
+border-white/10
+bg-[#090d12]
+transition
+duration-500
+hover:-translate-y-2
+hover:border-cyan-400/40
+"
+
+>
+
+
+
+
+
+<div
+
+className="
+relative
+h-52
+overflow-hidden
+"
+
+>
+
+
+
+<img
+
+src={getMapImage(info?.map)}
+
+onError={(e:any)=>{
+
+e.currentTarget.src =
+"maps/default.jpg";
+
+}}
+
+className="
+h-full
+w-full
+object-cover
+transition
+duration-700
+hover:scale-110
+"
+
+/>
+
+
+
+
+
+
+<div
+
+className={`
+absolute
+top-5
+left-5
+rounded-full
+px-4
+py-2
+text-sm
+font-bold
+text-white
+${online ? "bg-emerald-500" : "bg-red-500"}
+`}
+
+>
+
+{
+
+online
+?
+
+"● AKTİF"
+
+:
+
+"● KAPALI"
+
+}
+
+</div>
+
+
+
+</div>
+
+
+
+
+
+
+
+<div className="p-8">
+
+
+
+
+
+<h3
+
+className="
+text-[26px]
+font-black
+leading-[1.1]
+tracking-tight
+text-white
+"
+
+>
+
+{
+
+info?.name ??
+
+"Sunucu Yükleniyor..."
+
+}
+
+</h3>
+
+
+<div
+className="
+mt-2
+flex
+flex-col
+gap-2
+"
+>
+
+<div
+className="
+flex
+items-center
+gap-2
+text-xs
+text-gray-400
+text-xm
+font-medium
+"
+>
+
+<span>
+🌐
+</span>
+
+<span>
+{server.host}:{server.port}
+</span>
+
+</div>
+
+
+
+<div
+className="
+mt-0
+flex
+items-center
+gap-2
+text-cyan-400
+text-xs
+font-semibold
+"
+>
+
+<span>
+🗺️
+</span>
+
+<span>
+{info?.map ?? "-"}
+</span>
+
+</div>
+
+
+</div>
+
+
+
+
+
+
+
+<div
+
+className="
+mt-8
+grid
+grid-cols-2
+gap-6
+"
+
+>
+<div>
+
+
+<p className="text-gray-500">
+
+Oyuncular
+
+</p>
+
+
+<h4
+
+className="
+text-xl
+font-bold
+text-white
+"
+
+>
+
+{
+
+info?.players ?? 0
+
+}
+
+/
+
+{
+
+info?.maxPlayers ?? 0
+
+}
+
+</h4>
+
+
+</div>
+
+
+
+
+
+
+
+<div>
+
+
+<p className="text-gray-500">
+
+Tickrate
+
+</p>
+
+
+<h4
+
+className="
+text-xl
+font-bold
+text-white
+"
+
+>
+
+128 Tick
+
+</h4>
+
+
+</div>
+
+
+
+
+
+
+
+<div>
+
+
+<p className="text-gray-500">
+
+Bölge
+
+</p>
+
+
+<h4
+
+className="
+text-xl
+font-bold
+text-white
+"
+
+>
+
+İstanbul
+
+</h4>
+
+
+</div>
+
+
+
+
+
+
+
+<div>
+
+
+<p className="text-gray-500">
+
+Ping
+
+</p>
+
+
+<h4
+
+className={`
+text-xl
+font-bold
+${pingColor}
+`}
+
+>
+
+{
+
+info?.ping ?? 0
+
+}
+
+ms
+
+</h4>
+
+
+</div>
+
+
+
+
+
+</div>
+
+
+
+
+
+
+
+
+
+{
+
+info?.playerList?.length > 0 && (
+
+
+<div
+
+className="
+mt-8
+rounded-xl
+bg-black/30
+p-4
+"
+
+>
+
+
+<h4
+
+className="
+text-cyan-400
+font-bold
+mb-3
+"
+
+>
+
+👥 Oyuncular
+
+</h4>
+
+
+
+
+
+<div
+
+className="
+space-y-2
+max-h-32
+overflow-y-auto
+"
+
+>
+
+
+{
+
+info.playerList.map(
+
+(player:any,i:number)=>(
+
+
+<div
+
+key={i}
+
+className="
+flex
+justify-between
+text-sm
+text-gray-300
+"
+
+>
+
+
+<span>
+
+🎮 {player.name || "Oyuncu"}
+
+</span>
+
+
+
+<span
+
+className="
+text-cyan-400
+"
+
+>
+
+{player.score ?? 0}
+
+</span>
+
+
+
+</div>
+
+
+)
+
+
+)
+
+
+}
+
+
+
+</div>
+
+
+</div>
+
+
+)
+
+
+}
+
+
+
+
+
+
+
+
+
+<div className="mt-8">
+
+
+
+<div
+
+className="
+flex
+justify-between
+items-center
+mb-2
+"
+
+>
+
+
+<p
+
+className="
+text-gray-400
+text-sm
+"
+
+>
+
+Sunucu Doluluğu
+
+</p>
+
+
+
+<p
+
+className="
+font-bold
+text-cyan-400
+"
+
+>
+
+%{percent}
+
+</p>
+
+
+
+</div>
+
+
+
+
+
+
+
+<div
+
+className="
+h-3
+rounded-full
+bg-white/10
+overflow-hidden
+"
+
+>
+
+
+<div
+
+className={`
+h-full
+rounded-full
+transition-all
+duration-700
+${barColor}
+`}
+
+style={{
+
+width:`${percent}%`
+
+}}
+
+
+/>
+
+
+
+</div>
+
+
+
+
+</div>
+
+
+
+
+
+
+
+
+
+<button
+
+className="
+mt-8
+w-full
+rounded-xl
+bg-cyan-400
+py-4
+font-bold
+text-black
+transition
+hover:scale-105
+"
+
+onClick={()=>{
+
+
+window.location.href =
+
+`steam://connect/${server.host}:${server.port}`;
+
+
+}}
+
+>
+
+
+▶ Sunucuya Bağlan
+
+
+</button>
+
+
+
+
+
+
+</div>
+
+
+
+
+
+</div>
+
+
+
+
+
+</FadeUp>
+
+
+)
+
+
+})
+
+
+}
+
+
+
+</div>
+
+
+
+</section>
+
+
+);
+
+
 }

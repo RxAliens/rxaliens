@@ -4,7 +4,6 @@ import {
   Crown,
   Medal,
   Trophy,
-  Target,
 } from "lucide-react";
 
 import GlowCard from "@/components/ui/GlowCard";
@@ -17,8 +16,8 @@ const topPlayers = [
     elo: 3245,
     kd: "1.84",
     hs: "63%",
-    color: "text-yellow-400",
     icon: Crown,
+    color: "text-yellow-400",
   },
   {
     place: 2,
@@ -26,8 +25,8 @@ const topPlayers = [
     elo: 3112,
     kd: "1.72",
     hs: "60%",
-    color: "text-gray-300",
     icon: Medal,
+    color: "text-gray-300",
   },
   {
     place: 3,
@@ -35,10 +34,11 @@ const topPlayers = [
     elo: 2970,
     kd: "1.63",
     hs: "57%",
-    color: "text-orange-400",
     icon: Trophy,
+    color: "text-orange-400",
   },
 ];
+
 
 const ranking = [
   {
@@ -71,15 +71,34 @@ const ranking = [
   },
 ];
 
+
 export default function Leaderboard() {
   return (
+
     <section
       id="leaderboard"
-      className="relative py-28"
+      className="relative py-28 overflow-hidden"
     >
-      <div className="absolute left-0 top-20 h-80 w-80 rounded-full bg-cyan-500/10 blur-[170px]" />
 
-      <div className="relative mx-auto max-w-7xl px-6">
+      {/* Glow */}
+
+      <div
+        className="
+          absolute
+          left-1/2
+          top-20
+          -translate-x-1/2
+          h-[500px]
+          w-[500px]
+          rounded-full
+          bg-cyan-500/10
+          blur-[180px]
+        "
+      />
+
+
+      <div className="relative mx-auto max-w-6xl px-6">
+
 
         <SectionTitle
           badge="LİDERLİK TABLOSU"
@@ -87,35 +106,69 @@ export default function Leaderboard() {
           description="En yüksek ELO puanına sahip oyuncular burada yer alıyor."
         />
 
-        {/* İlk 3 */}
 
-        <div className="grid gap-8 lg:grid-cols-3">
 
-          {topPlayers.map((player) => {
+        {/* TOP 3 */}
+
+        <div
+          className="
+            mt-12
+            grid
+            gap-8
+            lg:grid-cols-3
+          "
+        >
+
+
+          {topPlayers.map((player)=>{
 
             const Icon = player.icon;
+
 
             return (
 
               <GlowCard
                 key={player.place}
-                className="p-8 text-center"
+                className="p-6 text-center"
               >
 
-                <div className="mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-full border border-cyan-400/20 bg-cyan-500/10">
+
+                <div
+                  className="
+                    mx-auto
+                    flex
+                    h-20
+                    w-20
+                    items-center
+                    justify-center
+                    rounded-full
+                    border
+                    border-cyan-400/20
+                    bg-cyan-500/10
+                  "
+                >
 
                   <Icon
-                    size={42}
+                    size={36}
                     className={player.color}
                   />
 
                 </div>
 
-                <h3 className="text-3xl font-black text-white">
 
+
+                <h3
+                  className="
+                    mt-6
+                    text-2xl
+                    font-black
+                    text-white
+                  "
+                >
                   {player.name}
-
                 </h3>
+
+
 
                 <p className="mt-2 text-gray-400">
 
@@ -123,59 +176,140 @@ export default function Leaderboard() {
 
                 </p>
 
-                <div className="mt-8 space-y-3">
 
-                  <div className="flex justify-between text-gray-400">
-                    <span>ELO</span>
+
+
+                <div className="mt-6 space-y-3">
+
+
+                  <div className="flex justify-between">
+
+                    <span className="text-gray-500">
+                      ELO
+                    </span>
+
                     <span className="font-bold text-cyan-400">
                       {player.elo}
                     </span>
+
                   </div>
 
-                  <div className="flex justify-between text-gray-400">
-                    <span>K/D</span>
+
+
+                  <div className="flex justify-between">
+
+                    <span className="text-gray-500">
+                      K/D
+                    </span>
+
                     <span className="font-bold text-white">
                       {player.kd}
                     </span>
+
                   </div>
 
-                  <div className="flex justify-between text-gray-400">
-                    <span>HS%</span>
+
+
+                  <div className="flex justify-between">
+
+                    <span className="text-gray-500">
+                      HS%
+                    </span>
+
                     <span className="font-bold text-white">
                       {player.hs}
                     </span>
+
                   </div>
 
+
                 </div>
+
 
               </GlowCard>
 
             );
 
+
           })}
+
 
         </div>
 
-        {/* Liste */}
 
-        <GlowCard className="mt-10 overflow-hidden">
 
-          <div className="divide-y divide-white/5">
 
-            {ranking.map((player) => (
+
+        {/* LIST */}
+
+
+        <GlowCard
+          className="
+            mt-10
+            overflow-hidden
+          "
+        >
+
+
+          <div
+            className="
+              divide-y
+              divide-white/5
+            "
+          >
+
+
+            {ranking.map((player)=>(
+
 
               <div
+
                 key={player.rank}
-                className="flex items-center justify-between px-8 py-6 transition hover:bg-cyan-500/5"
+
+                className="
+                  flex
+                  items-center
+                  justify-between
+                  px-6
+                  py-5
+                  transition
+                  hover:bg-cyan-500/5
+                "
+
               >
 
-                <div className="flex items-center gap-6">
 
-                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-cyan-500/10 text-cyan-400 font-bold">
+
+                <div
+                  className="
+                    flex
+                    items-center
+                    gap-5
+                  "
+                >
+
+
+
+                  <div
+                    className="
+                      flex
+                      h-11
+                      w-11
+                      items-center
+                      justify-center
+                      rounded-full
+                      bg-cyan-500/10
+                      font-bold
+                      text-cyan-400
+                    "
+                  >
 
                     {player.rank}
 
                   </div>
+
+
+
 
                   <div>
 
@@ -185,17 +319,31 @@ export default function Leaderboard() {
 
                     </h4>
 
+
                     <p className="text-sm text-gray-500">
 
                       Rekabetçi Oyuncu
 
                     </p>
 
+
                   </div>
+
 
                 </div>
 
-                <div className="flex items-center gap-10">
+
+
+
+
+                <div
+                  className="
+                    flex
+                    items-center
+                    gap-8
+                  "
+                >
+
 
                   <div className="text-center">
 
@@ -204,12 +352,12 @@ export default function Leaderboard() {
                     </p>
 
                     <p className="font-bold text-cyan-400">
-
                       {player.elo}
-
                     </p>
 
                   </div>
+
+
 
                   <div className="text-center">
 
@@ -218,12 +366,13 @@ export default function Leaderboard() {
                     </p>
 
                     <p className="font-bold text-white">
-
                       {player.kd}
-
                     </p>
 
                   </div>
+
+
+
 
                   <div className="text-center">
 
@@ -232,25 +381,31 @@ export default function Leaderboard() {
                     </p>
 
                     <p className="font-bold text-white">
-
                       {player.hs}
-
                     </p>
 
                   </div>
 
+
                 </div>
+
 
               </div>
 
+
             ))}
+
 
           </div>
 
+
         </GlowCard>
+
 
       </div>
 
+
     </section>
+
   );
 }

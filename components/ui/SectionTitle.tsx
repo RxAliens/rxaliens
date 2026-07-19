@@ -1,7 +1,7 @@
 "use client";
 
 interface SectionTitleProps {
-  badge: string;
+  badge?: string;
   title: string;
   description: string;
 }

@@ -7,33 +7,52 @@ interface PrimaryButtonProps {
   href?: string;
   children: ReactNode;
   className?: string;
+  onClick?: () => void;
 }
 
 export default function PrimaryButton({
-  href = "#",
+  href,
   children,
   className = "",
+  onClick,
 }: PrimaryButtonProps) {
+
+  const style = `
+    inline-flex
+    items-center
+    justify-center
+    rounded-2xl
+    bg-cyan-400
+    px-8
+    py-4
+    font-bold
+    text-black
+    transition-all
+    duration-300
+    hover:scale-105
+    hover:shadow-[0_0_35px_rgba(34,211,238,.55)]
+    active:scale-95
+    cursor-pointer
+    ${className}
+  `;
+
+
+  if (onClick) {
+    return (
+      <button
+        onClick={onClick}
+        className={style}
+      >
+        {children}
+      </button>
+    );
+  }
+
+
   return (
     <Link
-      href={href}
-      className={`
-        inline-flex
-        items-center
-        justify-center
-        rounded-2xl
-        bg-cyan-400
-        px-8
-        py-4
-        font-bold
-        text-black
-        transition-all
-        duration-300
-        hover:scale-105
-        hover:shadow-[0_0_35px_rgba(34,211,238,.55)]
-        active:scale-95
-        ${className}
-      `}
+      href={href ?? "#"}
+      className={style}
     >
       {children}
     </Link>

@@ -3,21 +3,28 @@
 import { ReactNode } from "react";
 import TiltCard from "@/components/effects/TiltCard";
 
+
 interface GlowCardProps {
   children: ReactNode;
   className?: string;
 }
 
+
 export default function GlowCard({
   children,
   className = "",
 }: GlowCardProps) {
+
+
   return (
-    <TiltCard className={className}>
+
+    <TiltCard>
+
       <div
-        className="
+        className={`
           group
           relative
+          w-full
           overflow-hidden
           rounded-3xl
           border
@@ -29,17 +36,21 @@ export default function GlowCard({
           hover:-translate-y-2
           hover:border-cyan-400/40
           hover:shadow-[0_0_50px_rgba(34,211,238,.18)]
-        "
+          ${className}
+        `}
       >
-        {/* Glow */}
+
+
+        {/* INNER GLOW */}
+
         <div
           className="
             pointer-events-none
             absolute
-            -right-16
-            -top-16
-            h-52
-            w-52
+            -right-20
+            -top-20
+            h-60
+            w-60
             rounded-full
             bg-cyan-500/10
             blur-3xl
@@ -49,7 +60,10 @@ export default function GlowCard({
           "
         />
 
-        {/* Border Glow */}
+
+
+        {/* BORDER LIGHT */}
+
         <div
           className="
             pointer-events-none
@@ -58,17 +72,33 @@ export default function GlowCard({
             rounded-3xl
             border
             border-transparent
-            transition-all
+            transition
             duration-500
             group-hover:border-cyan-400/20
           "
         />
 
-        {/* Content */}
-        <div className="relative z-10">
+
+
+        {/* CONTENT */}
+
+        <div
+          className="
+            relative
+            z-10
+          "
+        >
+
           {children}
+
         </div>
+
+
       </div>
+
+
     </TiltCard>
+
   );
+
 }
