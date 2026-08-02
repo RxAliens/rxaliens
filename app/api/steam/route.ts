@@ -7,7 +7,7 @@ export async function GET() {
   const baseUrl = process.env.NEXTAUTH_URL ?? "http://localhost:3000";
 
   const returnUrl =
-    `${baseUrl}/api/auth/steam/callback`;
+    `${baseUrl}/api/steam/callback`;
 
 
   const realm =

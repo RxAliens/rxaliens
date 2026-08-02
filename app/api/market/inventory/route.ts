@@ -1,0 +1,4 @@
+import { NextRequest, NextResponse } from "next/server";
+import { db, getUser, upsertUser } from "@/lib/db";
+import { getSteamUser } from "@/lib/steam-session";
+export async function GET(req:NextRequest){const s=getSteamUser(req);if(!s)return NextResponse.json({error:"Giriş gerekli"},{status:401});upsertUser(s.id,s.name||"Steam User",s.avatar);const u=getUser(s.id);const items=db.prepare(`SELECT m.*,p.purchased_at FROM purchases p JOIN market_items m ON m.id=p.item_id WHERE p.steam_id=? ORDER BY p.purchased_at DESC`).all(s.id);return NextResponse.json({balance:u.coin,items,equipped:{badge:u.equipped_badge,title:u.equipped_title,frame:u.equipped_frame}})}

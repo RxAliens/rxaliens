@@ -355,7 +355,10 @@ overflow-hidden
 
 
 
+{/* eslint-disable-next-line @next/next/no-img-element */}
 <img
+
+alt={`${server.id} harita görseli`}
 
 src={getMapImage(info?.map)}
 

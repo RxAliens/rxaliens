@@ -1,131 +1,160 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+import { db, getUser, upsertUser } from "@/lib/db";
+import { isAdmin } from "@/lib/steam-session";
+import { levelFromXp } from "@/lib/xp";
 
-export async function GET() {
+export const dynamic = "force-dynamic";
+
+type SteamCookieUser = {
+  id?: string;
+  steamid?: string;
+  name?: string;
+  image?: string;
+};
+
+export async function GET(req: NextRequest) {
   try {
-    const steamID = "76561198321706845";
-
     const apiKey = process.env.STEAM_API_KEY;
 
     if (!apiKey) {
-      return NextResponse.json(
-        {
-          error: "STEAM_API_KEY bulunamadı.",
-        },
-        {
-          status: 500,
-        }
-      );
+      return NextResponse.json({ error: "STEAM_API_KEY bulunamadı." }, { status: 500 });
     }
 
-    // Steam Profili
+    const rawCookie = req.cookies.get("steam_user")?.value;
+
+    if (!rawCookie) {
+      return NextResponse.json({ error: "Steam oturumu bulunamadı." }, { status: 401 });
+    }
+
+    let cookieUser: SteamCookieUser;
+
+    try {
+      cookieUser = JSON.parse(decodeURIComponent(rawCookie));
+    } catch {
+      try {
+        cookieUser = JSON.parse(rawCookie);
+      } catch {
+        return NextResponse.json({ error: "Steam oturumu geçersiz." }, { status: 401 });
+      }
+    }
+
+    const steamID = cookieUser.id || cookieUser.steamid;
+
+    if (!steamID) {
+      return NextResponse.json({ error: "Steam ID bulunamadı." }, { status: 401 });
+    }
+
     const profileRes = await fetch(
       `https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=${apiKey}&steamids=${steamID}`,
-      {
-        cache: "no-store",
-      }
+      { cache: "no-store" }
     );
 
-    const profileData = await profileRes.json();
+    if (!profileRes.ok) {
+      return NextResponse.json({ error: "Steam profil servisine ulaşılamadı." }, { status: 502 });
+    }
 
+    const profileData = await profileRes.json();
     const player = profileData?.response?.players?.[0];
 
     if (!player) {
-      return NextResponse.json(
-        {
-          error: "Steam kullanıcısı bulunamadı.",
-        },
-        {
-          status: 404,
-        }
-      );
+      return NextResponse.json({ error: "Steam kullanıcısı bulunamadı." }, { status: 404 });
     }
 
-    // Steam Level
-    const levelRes = await fetch(
-      `https://api.steampowered.com/IPlayerService/GetSteamLevel/v1/?key=${apiKey}&steamid=${steamID}`,
-      {
-        cache: "no-store",
-      }
-    );
+    const [levelRes, bansRes] = await Promise.all([
+      fetch(
+        `https://api.steampowered.com/IPlayerService/GetSteamLevel/v1/?key=${apiKey}&steamid=${steamID}`,
+        { cache: "no-store" }
+      ),
+      fetch(
+        `https://api.steampowered.com/ISteamUser/GetPlayerBans/v1/?key=${apiKey}&steamids=${steamID}`,
+        { cache: "no-store" }
+      ),
+    ]);
 
-    const levelData = await levelRes.json();
+    const levelData = levelRes.ok ? await levelRes.json() : null;
+    const bansData = bansRes.ok ? await bansRes.json() : null;
 
-    const steamLevel =
-      levelData?.response?.player_level ?? 0;
+    const steamLevel = levelData?.response?.player_level ?? 0;
+    const bans = bansData?.players?.[0];
+    const vac = Boolean(bans?.VACBanned);
 
-    // Durum
-    let status = "⚫ Çevrimdışı";
+    const personaStates: Record<number, string> = {
+      0: "Çevrimdışı",
+      1: "Çevrimiçi",
+      2: "Meşgul",
+      3: "Uzakta",
+      4: "Ertele",
+      5: "Takas Yapmak İstiyor",
+      6: "Oynamak İstiyor",
+    };
 
-    if (player.personastate === 1) {
-      status = "🟢 Çevrimiçi";
-    }
-
-    if (player.personastate === 6) {
-      status = "🎮 Oyunda";
-    }
-
-    // Oynadığı oyun
+    let status = personaStates[player.personastate] ?? "Bilinmiyor";
     const game = player.gameextrainfo ?? null;
 
-    // Ülke
-    const countryCode = player.loccountrycode ?? "TR";
+    if (game) status = "Oyunda";
 
-    const country =
-      new Intl.DisplayNames(["tr"], {
-        type: "region",
-      }).of(countryCode);
+    const countryCode = (player.loccountrycode || "TR").toUpperCase();
 
-    const countryFlag = `https://flagcdn.com/w40/${countryCode.toLowerCase()}.png`;
+    let country = countryCode;
+    try {
+      country =
+        new Intl.DisplayNames(["tr"], { type: "region" }).of(countryCode) ||
+        countryCode;
+    } catch {}
 
-    // Hesap oluşturulma tarihi
-    const created = new Date(player.timecreated * 1000);
-
-    // Son giriş
-    const lastLogoff = new Date(player.lastlogoff * 1000);
-
-    return NextResponse.json({
-      steamid: player.steamid,
-
-      name: player.personaname,
-
-      realName: player.realname ?? null,
-
-      avatar: player.avatarfull,
-
-      avatarMedium: player.avatarmedium,
-
-      avatarSmall: player.avatar,
-
-      profileUrl: player.profileurl,
-
-      status,
-
-      game,
-
-      steamLevel,
-
-      country,
-
-      countryCode,
-
-      countryFlag,
-
-      accountCreated: created,
-
-      lastLogoff,
-
-      visibility: player.communityvisibilitystate,
-    });
-  } catch (error) {
-    console.log("Steam profil hatası:", error);
+    upsertUser(steamID, player.personaname, player.avatarfull);
+    const rxUser = getUser(steamID);
+    const xpState = levelFromXp(rxUser?.rx_xp ?? 0);
+    const equippedRows = db.prepare(`SELECT id,name,category,emoji,rarity,effect FROM market_items WHERE id IN (?,?,?)`).all(
+      rxUser?.equipped_badge ?? -1, rxUser?.equipped_title ?? -1, rxUser?.equipped_frame ?? -1
+    );
+    const equipped = {
+      badge: equippedRows.find((x: any) => x.category === "Rozet") ?? null,
+      title: equippedRows.find((x: any) => x.category === "Unvan") ?? null,
+      frame: equippedRows.find((x: any) => x.category === "Çerçeve") ?? null,
+    };
 
     return NextResponse.json(
       {
-        error: "Steam profil alınamadı.",
+        steamid: player.steamid,
+        name: player.personaname,
+        realName: player.realname ?? null,
+        avatar: player.avatarfull || cookieUser.image || "/images/default-avatar.png",
+        avatarMedium: player.avatarmedium ?? null,
+        avatarSmall: player.avatar ?? null,
+        profileUrl: player.profileurl,
+        status,
+        personaState: player.personastate,
+        game,
+        steamLevel,
+        level: steamLevel,
+        country,
+        countryCode,
+        vac,
+        accountCreated: player.timecreated
+          ? new Date(player.timecreated * 1000).toISOString()
+          : null,
+        lastLogoff: player.lastlogoff
+          ? new Date(player.lastlogoff * 1000).toISOString()
+          : null,
+        visibility: player.communityvisibilitystate,
+        coin: rxUser?.coin ?? 100,
+        rxLevel: xpState.level,
+        rxXp: rxUser?.rx_xp ?? 0,
+        rxCurrentXp: xpState.currentXp,
+        rxNextXp: xpState.nextXp,
+        rxProgress: xpState.progress,
+        equipped,
+        isAdmin: isAdmin(steamID),
       },
       {
-        status: 500,
+        headers: {
+          "Cache-Control": "no-store, no-cache, must-revalidate",
+        },
       }
     );
+  } catch (error) {
+    console.error("Steam profil hatası:", error);
+    return NextResponse.json({ error: "Steam profil alınamadı." }, { status: 500 });
   }
 }

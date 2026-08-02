@@ -21,3 +21,23 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* RXALIENS animated cosmetic avatar frames */
+.rx-avatar-frame{position:relative;display:inline-grid;place-items:center;isolation:isolate;flex:0 0 auto}
+.rx-frame-image{position:relative;z-index:3;width:calc(100% - 10px);height:calc(100% - 10px);border-radius:9999px;object-fit:cover;background:#050914}
+.rx-frame-ring,.rx-frame-glow{position:absolute;inset:0;border-radius:9999px;pointer-events:none}
+.rx-frame-ring{z-index:2;background:#164e63;padding:3px;mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);mask-composite:exclude;-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor}
+.rx-frame-glow{z-index:1;opacity:.35;filter:blur(10px);transform:scale(1.04);background:#22d3ee}
+.rx-frame-none .rx-frame-ring{background:rgba(34,211,238,.45)}
+.rx-frame-none .rx-frame-glow{opacity:.15}
+.rx-frame-rgb .rx-frame-ring,.rx-frame-rgb .rx-frame-glow{background:conic-gradient(from 0deg,#ff1744,#ff00e5,#7c4dff,#00b0ff,#00e5ff,#00e676,#ffea00,#ff6d00,#ff1744);animation:rxRgbSpin 2.8s linear infinite}
+.rx-frame-rgb .rx-frame-glow{opacity:.62;filter:blur(13px);animation:rxRgbSpin 2.8s linear infinite,rxGlowBreath 1.6s ease-in-out infinite alternate}
+.rx-frame-cyan-pulse .rx-frame-ring{background:conic-gradient(from 20deg,#083344,#22d3ee,#ecfeff,#06b6d4,#083344);animation:rxRgbSpin 3.6s linear infinite}
+.rx-frame-cyan-pulse .rx-frame-glow{background:#22d3ee;animation:rxCyanPulse 1.7s ease-in-out infinite}
+.rx-frame-alien-green .rx-frame-ring{background:conic-gradient(from 0deg,#052e16,#22c55e,#bbf7d0,#4ade80,#052e16);animation:rxRgbSpin 4.2s linear infinite reverse}
+.rx-frame-alien-green .rx-frame-glow{background:#22c55e;animation:rxAlienPulse 1.9s ease-in-out infinite}
+@keyframes rxRgbSpin{to{transform:rotate(360deg)}}
+@keyframes rxGlowBreath{from{opacity:.35;transform:scale(1.02)}to{opacity:.75;transform:scale(1.10)}}
+@keyframes rxCyanPulse{0%,100%{opacity:.24;transform:scale(1.01)}50%{opacity:.7;transform:scale(1.10)}}
+@keyframes rxAlienPulse{0%,100%{opacity:.22;transform:scale(1.02)}50%{opacity:.72;transform:scale(1.12)}}
+@media (prefers-reduced-motion:reduce){.rx-frame-ring,.rx-frame-glow{animation:none!important}}

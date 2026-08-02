@@ -105,7 +105,7 @@ export default function Hero() {
 
 
           <Badge>
-            🚀 TÜRKİYE'NİN YENİ NESİL COUNTER-STRIKE PLATFORMU
+            🚀 TÜRKİYE&apos;NİN YENİ NESİL COUNTER-STRIKE PLATFORMU
           </Badge>
 
 
@@ -181,7 +181,7 @@ export default function Hero() {
           >
 
 
-          <PrimaryButton href="/api/auth/steam">
+          <PrimaryButton href="/api/steam">
             Steam ile Giriş
           </PrimaryButton>
 
