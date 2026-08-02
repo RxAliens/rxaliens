@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { upsertUser } from "@/lib/db";
+import { createSteamSession } from "@/lib/steam-session";
 
 export async function GET(req: NextRequest) {
   const baseUrl = (process.env.NEXTAUTH_URL || req.nextUrl.origin).replace(/\/$/, "");
@@ -105,7 +106,7 @@ export async function GET(req: NextRequest) {
 
     response.cookies.set(
       "steam_user",
-      JSON.stringify(user),
+      createSteamSession(user),
       {
         httpOnly: true,
 

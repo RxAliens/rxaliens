@@ -1,39 +1,45 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+import { getSteamUser } from "@/lib/steam-session";
 
-export async function GET() {
+export const dynamic = "force-dynamic";
+
+export async function GET(req: NextRequest) {
+  const session = getSteamUser(req);
+  if (!session) {
+    return NextResponse.json({ error: "Steam ile giriş yapmalısın." }, { status: 401 });
+  }
+
+  const apiKey = process.env.LEETIFY_API_KEY;
+  if (!apiKey) {
+    return NextResponse.json({ error: "LEETIFY_API_KEY tanımlı değil." }, { status: 500 });
+  }
+
   try {
-    const steam64id = "76561198321706845";
+    const url = new URL("https://api-public.cs-prod.leetify.com/v3/profile");
+    url.searchParams.set("steam64_id", session.id);
 
-    const res = await fetch(
-      `https://api-public.cs-prod.leetify.com/v3/profile?steam64_id=${steam64id}`,
-      {
-        headers: {
-          Authorization: `Bearer ${process.env.LEETIFY_API_KEY}`,
-        },
-        cache: "no-store",
-      }
-    );
+    const res = await fetch(url, {
+      headers: { Authorization: `Bearer ${apiKey}` },
+      cache: "no-store",
+    });
 
     if (!res.ok) {
-      return NextResponse.json(
-        { error: "Leetify API Error" },
-        { status: res.status }
-      );
+      const body = await res.text().catch(() => "");
+      console.error("Leetify API error", { status: res.status, steamId: session.id, body: body.slice(0, 500) });
+      const message =
+        res.status === 404
+          ? "Bu Steam hesabı için Leetify profili bulunamadı veya profil Public API üzerinden kullanılamıyor."
+          : res.status === 401
+            ? "Leetify API anahtarı geçersiz veya yetkisiz."
+            : "Leetify verileri şu anda alınamadı.";
+      return NextResponse.json({ error: message, leetifyStatus: res.status }, { status: res.status });
     }
 
-    const data = await res.json();
-
-    return NextResponse.json(data);
+    return NextResponse.json(await res.json(), {
+      headers: { "Cache-Control": "no-store" },
+    });
   } catch (error) {
-    console.error(error);
-
-    return NextResponse.json(
-      {
-        error: "Leetify bağlantı hatası",
-      },
-      {
-        status: 500,
-      }
-    );
+    console.error("Leetify bağlantı hatası:", error);
+    return NextResponse.json({ error: "Leetify bağlantı hatası." }, { status: 502 });
   }
 }

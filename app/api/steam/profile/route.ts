@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db, getUser, upsertUser } from "@/lib/db";
-import { isAdmin } from "@/lib/steam-session";
+import { getSteamUser, isAdmin } from "@/lib/steam-session";
 import { levelFromXp } from "@/lib/xp";
 
 export const dynamic = "force-dynamic";
@@ -20,29 +20,12 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "STEAM_API_KEY bulunamadı." }, { status: 500 });
     }
 
-    const rawCookie = req.cookies.get("steam_user")?.value;
-
-    if (!rawCookie) {
-      return NextResponse.json({ error: "Steam oturumu bulunamadı." }, { status: 401 });
+    const cookieUser = getSteamUser(req);
+    if (!cookieUser) {
+      return NextResponse.json({ error: "Steam oturumu geçersiz veya süresi dolmuş." }, { status: 401 });
     }
 
-    let cookieUser: SteamCookieUser;
-
-    try {
-      cookieUser = JSON.parse(decodeURIComponent(rawCookie));
-    } catch {
-      try {
-        cookieUser = JSON.parse(rawCookie);
-      } catch {
-        return NextResponse.json({ error: "Steam oturumu geçersiz." }, { status: 401 });
-      }
-    }
-
-    const steamID = cookieUser.id || cookieUser.steamid;
-
-    if (!steamID) {
-      return NextResponse.json({ error: "Steam ID bulunamadı." }, { status: 401 });
-    }
+    const steamID = cookieUser.id;
 
     const profileRes = await fetch(
       `https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=${apiKey}&steamids=${steamID}`,
@@ -120,7 +103,7 @@ export async function GET(req: NextRequest) {
         steamid: player.steamid,
         name: player.personaname,
         realName: player.realname ?? null,
-        avatar: player.avatarfull || cookieUser.image || "/images/default-avatar.png",
+        avatar: player.avatarfull || cookieUser.avatar || "/images/default-avatar.png",
         avatarMedium: player.avatarmedium ?? null,
         avatarSmall: player.avatar ?? null,
         profileUrl: player.profileurl,
