@@ -11,7 +11,13 @@ const g = globalThis as typeof globalThis & { __rxDb?: DB };
 
 function openDb(): DB {
   if (g.__rxDb) return g.__rxDb;
-  const dir = path.join(process.cwd(), "data");
+  // Vercel serverless functions cannot write inside /var/task.
+  // Use the writable /tmp directory in production; keep ./data locally.
+  // NOTE: /tmp is ephemeral on Vercel, so market/coin/XP data is not durable
+  // across cold starts. Move this SQLite database to a persistent DB before launch.
+  const dir = process.env.VERCEL
+    ? path.join("/tmp", "rxaliens-data")
+    : path.join(process.cwd(), "data");
   fs.mkdirSync(dir, { recursive: true });
   const db = new DatabaseSync(path.join(dir, "rxaliens.db")) as unknown as DB;
   db.exec("PRAGMA journal_mode=WAL; PRAGMA foreign_keys=ON;");

@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 
+function getBaseUrl(req: NextRequest) {
+  const configured = process.env.NEXTAUTH_URL?.replace(/\/$/, "");
+  if (configured) return configured;
+  return req.nextUrl.origin;
+}
+
 export async function GET(req: NextRequest) {
-  // İsteğin geldiği gerçek adresi kullanır:
-  // local -> http://localhost:3000
-  // Vercel -> https://<proje>.vercel.app
-  // özel domain -> https://rxaliens.com
-  const baseUrl = req.nextUrl.origin;
+  const baseUrl = getBaseUrl(req);
   const returnUrl = `${baseUrl}/api/steam/callback`;
 
   const params = new URLSearchParams({
@@ -17,6 +19,7 @@ export async function GET(req: NextRequest) {
     "openid.claimed_id": "http://specs.openid.net/auth/2.0/identifier_select",
   });
 
-  const steamUrl = `https://steamcommunity.com/openid/login?${params.toString()}`;
-  return NextResponse.redirect(steamUrl);
+  return NextResponse.redirect(
+    `https://steamcommunity.com/openid/login?${params.toString()}`
+  );
 }
