@@ -34,6 +34,17 @@ export function initDb() {
         id SERIAL PRIMARY KEY, steam_id TEXT NOT NULL, amount INTEGER NOT NULL, xp_after INTEGER NOT NULL,
         kind TEXT NOT NULL, note TEXT, actor_steam_id TEXT, created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
       );
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS leetify_match_count INTEGER NOT NULL DEFAULT 0;
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS last_active_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP;
+      CREATE TABLE IF NOT EXISTS leetify_matches (
+        match_id TEXT PRIMARY KEY,
+        steam_id TEXT NOT NULL REFERENCES users(steam_id) ON DELETE CASCADE,
+        map_name TEXT,
+        finished_at TIMESTAMPTZ,
+        payload JSONB,
+        synced_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE INDEX IF NOT EXISTS idx_leetify_matches_steam_id ON leetify_matches(steam_id);
       CREATE TABLE IF NOT EXISTS admin_logs (
         id SERIAL PRIMARY KEY, admin_steam_id TEXT NOT NULL, action TEXT NOT NULL, target TEXT, details TEXT,
         created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
@@ -57,7 +68,7 @@ export function initDb() {
 export async function upsertUser(steamId: string, name: string, avatar?: string | null) {
   await initDb();
   await db`INSERT INTO users (steam_id,name,avatar) VALUES (${steamId},${name},${avatar ?? null})
-    ON CONFLICT (steam_id) DO UPDATE SET name=EXCLUDED.name,avatar=EXCLUDED.avatar,updated_at=CURRENT_TIMESTAMP`;
+    ON CONFLICT (steam_id) DO UPDATE SET name=EXCLUDED.name,avatar=EXCLUDED.avatar,updated_at=CURRENT_TIMESTAMP,last_active_at=CURRENT_TIMESTAMP`;
 }
 
 export async function getUser(steamId: string) {

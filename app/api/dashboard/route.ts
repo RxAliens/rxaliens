@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { db, initDb } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -103,6 +104,28 @@ export async function GET(req: NextRequest) {
         : arrayOrEmpty<any>(leetify?.recent_matches).length > 0
           ? arrayOrEmpty<any>(leetify?.recent_matches)
           : arrayOrEmpty<any>(leetify?.matches);
+
+    // Ana sayfadaki topluluk istatistiği için Leetify'nin profil üzerinde
+    // döndürdüğü gerçek toplam maç sayısını kullan. Public API yalnızca son
+    // maçların bir bölümünü match_history içinde döndürebildiği için
+    // rawMatches.length toplam maç sayısı değildir.
+    if (profile?.steamid && leetify) {
+      const reportedTotalMatches = finite(
+        leetify?.total_matches ??
+          leetify?.totalMatches ??
+          leetify?.stats?.total_matches ??
+          leetify?.stats?.matches,
+        0
+      );
+      const leetifyMatchCount = Math.max(
+        0,
+        Math.trunc(reportedTotalMatches),
+        rawMatches.length
+      );
+
+      await initDb();
+      await db`UPDATE users SET leetify_match_count=${leetifyMatchCount}, last_active_at=CURRENT_TIMESTAMP, updated_at=CURRENT_TIMESTAMP WHERE steam_id=${String(profile.steamid)}`;
+    }
 
     const formatDuration = (seconds: unknown) => {
       const total = finite(seconds, 0);
