@@ -2,12 +2,18 @@ import { NextRequest, NextResponse } from "next/server";
 import { upsertUser } from "@/lib/db";
 import { createSteamSession } from "@/lib/steam-session";
 
+function safeReturnTo(value: string | null) {
+  if (!value || !value.startsWith("/") || value.startsWith("//")) return "/";
+  return value;
+}
+
 export async function GET(req: NextRequest) {
   const baseUrl = (process.env.NEXTAUTH_URL || req.nextUrl.origin).replace(/\/$/, "");
 
   try {
     const url = new URL(req.url);
     const searchParams = url.searchParams;
+    const returnTo = safeReturnTo(searchParams.get("returnTo"));
 
     // Steam'den gelen OpenID parametrelerini al
     const params = new URLSearchParams();
@@ -100,9 +106,7 @@ export async function GET(req: NextRequest) {
 
     await upsertUser(steamId, player.personaname, player.avatarfull);
 
-    const response = NextResponse.redirect(
-      `${baseUrl}/`
-    );
+    const response = NextResponse.redirect(new URL(returnTo, `${baseUrl}/`));
 
     response.cookies.set(
       "steam_user",
