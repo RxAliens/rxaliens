@@ -2,10 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { upsertUser } from "@/lib/db";
 
 export async function GET(req: NextRequest) {
+  const baseUrl = (process.env.NEXTAUTH_URL || req.nextUrl.origin).replace(/\/$/, "");
+
   try {
     const url = new URL(req.url);
     const searchParams = url.searchParams;
-    const baseUrl = (process.env.NEXTAUTH_URL || req.nextUrl.origin).replace(/\/$/, "");
 
     // Steam'den gelen OpenID parametrelerini al
     const params = new URLSearchParams();
