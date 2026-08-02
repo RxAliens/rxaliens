@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { upsertUser } from "@/lib/db";
 import { createSteamSession } from "@/lib/steam-session";
+import { syncLeetifyForSteamId } from "@/lib/leetify-sync";
 
 function safeReturnTo(value: string | null) {
   if (!value || !value.startsWith("/") || value.startsWith("//")) return "/";
@@ -105,6 +106,15 @@ export async function GET(req: NextRequest) {
     };
 
     await upsertUser(steamId, player.personaname, player.avatarfull);
+
+    // Dashboard'a girmeyi beklemeden Leetify verisini giriş anında senkronize et.
+    // Leetify geçici olarak cevap vermezse Steam girişini engelleme.
+    try {
+      const sync = await syncLeetifyForSteamId(steamId, { includeMatches: false });
+      if (!sync.ok) console.warn("Leetify login sync skipped:", sync);
+    } catch (syncError) {
+      console.error("Leetify login sync error:", syncError);
+    }
 
     const response = NextResponse.redirect(new URL(returnTo, `${baseUrl}/`));
 

@@ -29,10 +29,20 @@ export default function Stats() {
     let mounted = true;
     const load = async () => {
       try {
-        const res = await fetch("/api/site-stats", { cache: "no-store" });
-        if (!res.ok) return;
-        const json = await res.json();
-        if (mounted) setData({ ...emptyStats, ...json });
+        // Topluluk verileri DB'den hızlı gelir; GameDig sorgularını beklemez.
+        const communityRes = await fetch("/api/site-stats", { cache: "no-store" });
+        if (communityRes.ok) {
+          const community = await communityRes.json();
+          if (mounted) setData((prev) => ({ ...prev, ...community }));
+        }
+
+        // Sunucu sorgusu ayrı çalışır ve CDN tarafında kısa süre cache'lenebilir.
+        fetch("/api/server-stats")
+          .then((res) => res.ok ? res.json() : null)
+          .then((servers) => {
+            if (mounted && servers) setData((prev) => ({ ...prev, ...servers }));
+          })
+          .catch((error) => console.error("Server stats fetch error:", error));
       } catch (error) {
         console.error("Site stats fetch error:", error);
       }
