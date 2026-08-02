@@ -97,25 +97,103 @@ export async function GET(req: NextRequest) {
       ),
     };
 
-    // total_matches gibi sayısal alanları asla RecentMatches'a göndermiyoruz.
-    const matches =
-      arrayOrEmpty<any>(leetify?.recent_matches).length > 0
-        ? arrayOrEmpty<any>(leetify?.recent_matches)
-        : arrayOrEmpty<any>(leetify?.matches);
+    const rawMatches =
+      arrayOrEmpty<any>(leetify?.match_history).length > 0
+        ? arrayOrEmpty<any>(leetify?.match_history)
+        : arrayOrEmpty<any>(leetify?.recent_matches).length > 0
+          ? arrayOrEmpty<any>(leetify?.recent_matches)
+          : arrayOrEmpty<any>(leetify?.matches);
+
+    const formatDuration = (seconds: unknown) => {
+      const total = finite(seconds, 0);
+      if (total <= 0) return "-";
+      return `${Math.max(1, Math.round(total / 60))} dk`;
+    };
+
+    const matches = rawMatches.slice(0, 10).map((match: any) => {
+      const playerStats =
+        match?.player_stats ??
+        match?.player ??
+        (!Array.isArray(match?.stats) && match?.stats && typeof match.stats === "object" ? match.stats : null) ??
+        arrayOrEmpty<any>(match?.stats).find(
+          (p: any) => String(p?.steam64_id ?? p?.steam_id ?? "") === String(profile?.steamid ?? profile?.id ?? profile?.steamId ?? "")
+        ) ??
+        (arrayOrEmpty<any>(match?.stats).length === 1 ? match.stats[0] : {});
+
+      const kills = finite(playerStats?.total_kills ?? playerStats?.kills);
+      const deaths = finite(playerStats?.total_deaths ?? playerStats?.deaths);
+      const hsKills = finite(playerStats?.total_hs_kills ?? playerStats?.headshot_kills ?? playerStats?.headshots);
+      const teamNumber = finite(playerStats?.initial_team_number ?? playerStats?.team_number, -1);
+      const teamScores = arrayOrEmpty<any>(match?.team_scores);
+      const ownTeam = teamScores.find((t: any) => finite(t?.team_number, -2) === teamNumber);
+      const enemyTeam = teamScores.find((t: any) => finite(t?.team_number, -2) !== teamNumber);
+      const ownScore = finite(ownTeam?.score ?? match?.team_score ?? match?.score_team, 0);
+      const enemyScore = finite(enemyTeam?.score ?? match?.enemy_score ?? match?.score_enemy, 0);
+      const fallbackResult = String(match?.result ?? "").toUpperCase();
+      const result = ownScore || enemyScore
+        ? ownScore > enemyScore ? "WIN" : "LOSS"
+        : fallbackResult === "WIN" ? "WIN" : "LOSS";
+
+      const started = Date.parse(match?.started_at ?? match?.created_at ?? "");
+      const finished = Date.parse(match?.finished_at ?? match?.date ?? "");
+      const durationSeconds = Number.isFinite(started) && Number.isFinite(finished) && finished > started
+        ? (finished - started) / 1000
+        : match?.duration ?? match?.duration_seconds;
+
+      return {
+        id: match?.id ?? match?.game_id ?? null,
+        map: match?.map_name ?? match?.map ?? "Bilinmiyor",
+        result,
+        score: `${ownScore}-${enemyScore}`,
+        kd: deaths > 0 ? kills / deaths : kills,
+        hs: kills > 0 ? Math.round((hsKills / kills) * 100) : percent(playerStats?.headshot_percentage ?? playerStats?.hs),
+        adr: finite(playerStats?.dpr ?? playerStats?.adr ?? playerStats?.average_damage_per_round),
+        date: match?.finished_at ?? match?.date ?? "",
+        duration: formatDuration(durationSeconds),
+        leetifyRating: finite(playerStats?.leetify_rating ?? playerStats?.rating),
+      };
+    });
+
+    // Profil endpointi bazı genel savaş istatistiklerini vermediğinde, son maçlardan
+    // güvenilir özetler üret. Böylece üst kartlar gerçek maç verisi varken 0 göstermez.
+    const playedMatches = matches.filter((m: any) => m.score !== "0-0");
+    const average = (values: number[]) =>
+      values.length ? values.reduce((sum, value) => sum + value, 0) / values.length : null;
+
+    const matchKd = average(playedMatches.map((m: any) => finite(m.kd)).filter((v: number) => v >= 0));
+    const matchHs = average(playedMatches.map((m: any) => finite(m.hs)).filter((v: number) => v >= 0));
+    const matchAdr = average(playedMatches.map((m: any) => finite(m.adr)).filter((v: number) => v > 0));
+    const matchWinrate = playedMatches.length
+      ? (playedMatches.filter((m: any) => m.result === "WIN").length / playedMatches.length) * 100
+      : null;
+
+    // API'de doğrudan bulunan değerler öncelikli, yoksa son maç özeti kullanılır.
+    if (!stats.kd && matchKd !== null) stats.kd = Number(matchKd.toFixed(2));
+    if (!stats.hs && matchHs !== null) stats.hs = Number(matchHs.toFixed(1));
+    if (!stats.adr && matchAdr !== null) stats.adr = Number(matchAdr.toFixed(2));
+    if (!stats.winrate && matchWinrate !== null) stats.winrate = Number(matchWinrate.toFixed(1));
 
     const rawPerformance =
       arrayOrEmpty<any>(leetify?.performance).length > 0
         ? arrayOrEmpty<any>(leetify?.performance)
         : arrayOrEmpty<any>(cs2?.performance);
 
-    const performance = rawPerformance
+    const performanceFromApi = rawPerformance
       .map((item: any, index: number) => ({
         match: finite(item?.match ?? item?.index ?? index + 1, index + 1),
-        rating: finite(
-          item?.rating ?? item?.premierRating ?? item?.premier ?? item?.value
-        ),
+        rating: finite(item?.rating ?? item?.leetify_rating ?? item?.value),
+        metric: "Leetify",
       }))
-      .filter((item: any) => Number.isFinite(item.rating));
+      .filter((item: any) => Number.isFinite(item.rating) && item.rating !== 0);
+
+    // Leetify ayrı bir performance dizisi göndermiyorsa grafiği gerçek son maç ADR'leriyle doldur.
+    const performance = performanceFromApi.length
+      ? performanceFromApi.slice(-10)
+      : matches.slice(0, 10).reverse().map((match: any, index: number) => ({
+          match: index + 1,
+          rating: finite(match.adr),
+          metric: "ADR",
+        })).filter((item: any) => item.rating > 0);
 
     return NextResponse.json(
       {

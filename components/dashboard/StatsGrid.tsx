@@ -44,14 +44,14 @@ export default function StatsGrid({ stats }: StatsProps) {
   const leetify = safeNumber(stats.leetify);
 
   const cards = [
-    { title: "Premier Puanı", value: rating.toLocaleString("tr-TR"), progress: 0, icon: Trophy, color: "text-yellow-400", showBar: false },
-    { title: "Kafa Vuruşu", value: `${hs}%`, progress: hs, icon: Target, color: "text-red-400", showBar: true },
-    { title: "Ortalama Hasar", value: adr, progress: Math.min(Math.max(adr, 0), 100), icon: Flame, color: "text-orange-400", showBar: true },
-    { title: "Öldürme / Ölüm", value: kd.toFixed(2), progress: 0, icon: Skull, color: "text-cyan-400", showBar: false },
-    { title: "Kazanma Oranı", value: `${winrate}%`, progress: winrate, icon: Shield, color: "text-green-400", showBar: true },
-    { title: "Nişan Puanı", value: aim, progress: aim, icon: Crosshair, color: "text-violet-400", showBar: true },
-    { title: "Leetify Puanı", value: leetify, progress: 0, icon: Medal, color: "text-pink-400", showBar: false },
-    { title: "Clutch Başarısı", value: `${clutch}%`, progress: clutch, icon: TrendingUp, color: "text-blue-400", showBar: true },
+    { title: "Premier Puanı", value: rating > 0 ? rating.toLocaleString("tr-TR") : "-", progress: 0, icon: Trophy, color: "text-yellow-400", showBar: false },
+    { title: "Kafa Vuruşu", value: hs > 0 ? `%${hs.toLocaleString("tr-TR", { maximumFractionDigits: 1 })}` : "-", progress: hs, icon: Target, color: "text-red-400", showBar: true },
+    { title: "Ortalama Hasar", value: adr > 0 ? adr.toLocaleString("tr-TR", { maximumFractionDigits: 2 }) : "-", progress: Math.min(Math.max(adr, 0), 100), icon: Flame, color: "text-orange-400", showBar: true },
+    { title: "Öldürme / Ölüm", value: kd > 0 ? kd.toFixed(2) : "-", progress: 0, icon: Skull, color: "text-cyan-400", showBar: false },
+    { title: "Kazanma Oranı", value: winrate > 0 ? `%${winrate.toLocaleString("tr-TR", { maximumFractionDigits: 1 })}` : "-", progress: winrate, icon: Shield, color: "text-green-400", showBar: true },
+    { title: "Nişan Puanı", value: aim > 0 ? aim.toLocaleString("tr-TR", { maximumFractionDigits: 2 }) : "-", progress: aim, icon: Crosshair, color: "text-violet-400", showBar: true },
+    { title: "Leetify Puanı", value: leetify !== 0 ? leetify.toLocaleString("tr-TR", { maximumFractionDigits: 2 }) : "-", progress: 0, icon: Medal, color: "text-pink-400", showBar: false },
+    { title: "Clutch Başarısı", value: clutch > 0 ? `%${clutch.toLocaleString("tr-TR", { maximumFractionDigits: 2 })}` : "-", progress: clutch, icon: TrendingUp, color: "text-blue-400", showBar: true },
   ];
 
   return (

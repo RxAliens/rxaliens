@@ -31,13 +31,25 @@ const resultMap = {
   LOSS: "Mağlubiyet",
 };
 
-const trDate = (v: string) =>
-  v.replace("Yesterday", "Dün")
-   .replace("Today", "Bugün")
-   .replace("hours ago", " saat önce")
-   .replace("hour ago", " saat önce")
-   .replace("days ago", " gün önce")
-   .replace("day ago", " gün önce");
+const trDate = (v: string) => {
+  if (!v) return "-";
+  const parsed = new Date(v);
+  if (!Number.isNaN(parsed.getTime())) {
+    return new Intl.DateTimeFormat("tr-TR", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    }).format(parsed);
+  }
+  return v.replace("Yesterday", "Dün")
+    .replace("Today", "Bugün")
+    .replace("hours ago", " saat önce")
+    .replace("hour ago", " saat önce")
+    .replace("days ago", " gün önce")
+    .replace("day ago", " gün önce");
+};
 
 const trDuration = (v: string) =>
   v.replace("mins", "dk").replace("min", "dk");
