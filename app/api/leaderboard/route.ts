@@ -1,15 +1,2 @@
-import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/db";
-import { getSteamUser } from "@/lib/steam-session";
-import { levelFromXp } from "@/lib/xp";
-
-export const dynamic = "force-dynamic";
-
-export async function GET(req: NextRequest) {
-  const session = getSteamUser(req);
-  const rows = db.prepare(`SELECT u.steam_id,u.name,u.avatar,u.rx_xp,u.rx_level,m.name title_name,m.emoji title_emoji
-    FROM users u LEFT JOIN market_items m ON m.id=u.equipped_title
-    ORDER BY u.rx_xp DESC,u.created_at ASC LIMIT 100`).all();
-  const players = rows.map((r:any,index:number)=>({ ...r, rank:index+1, ...levelFromXp(r.rx_xp || 0), isMe: session?.id === r.steam_id }));
-  return NextResponse.json({ players }, { headers: { "Cache-Control": "no-store" } });
-}
+import { NextRequest,NextResponse } from "next/server"; import { db,initDb } from "@/lib/db"; import { getSteamUser } from "@/lib/steam-session"; import { levelFromXp } from "@/lib/xp"; export const dynamic="force-dynamic";
+export async function GET(req:NextRequest){await initDb();const session=getSteamUser(req);const rows=await db`SELECT u.steam_id,u.name,u.avatar,u.rx_xp,u.rx_level,m.name title_name,m.emoji title_emoji FROM users u LEFT JOIN market_items m ON m.id=u.equipped_title ORDER BY u.rx_xp DESC,u.created_at ASC LIMIT 100`;const players=rows.map((r:any,index:number)=>({...r,rank:index+1,...levelFromXp(r.rx_xp||0),isMe:session?.id===r.steam_id}));return NextResponse.json({players},{headers:{"Cache-Control":"no-store"}})}

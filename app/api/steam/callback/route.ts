@@ -97,7 +97,7 @@ export async function GET(req: NextRequest) {
       createdAt: Date.now(),
     };
 
-    upsertUser(steamId, player.personaname, player.avatarfull);
+    await upsertUser(steamId, player.personaname, player.avatarfull);
 
     const response = NextResponse.redirect(
       `${baseUrl}/`

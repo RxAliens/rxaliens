@@ -102,12 +102,13 @@ export async function GET(req: NextRequest) {
         countryCode;
     } catch {}
 
-    upsertUser(steamID, player.personaname, player.avatarfull);
-    const rxUser = getUser(steamID);
+    await upsertUser(steamID, player.personaname, player.avatarfull);
+    const rxUser = await getUser(steamID);
     const xpState = levelFromXp(rxUser?.rx_xp ?? 0);
-    const equippedRows = db.prepare(`SELECT id,name,category,emoji,rarity,effect FROM market_items WHERE id IN (?,?,?)`).all(
-      rxUser?.equipped_badge ?? -1, rxUser?.equipped_title ?? -1, rxUser?.equipped_frame ?? -1
-    );
+    const equippedIds = [rxUser?.equipped_badge, rxUser?.equipped_title, rxUser?.equipped_frame].filter((x): x is number => typeof x === "number");
+    const equippedRows = equippedIds.length
+      ? await db`SELECT id,name,category,emoji,rarity,effect FROM market_items WHERE id IN ${db(equippedIds)}`
+      : [];
     const equipped = {
       badge: equippedRows.find((x: any) => x.category === "Rozet") ?? null,
       title: equippedRows.find((x: any) => x.category === "Unvan") ?? null,
