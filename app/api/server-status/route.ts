@@ -3,8 +3,6 @@ import { GameDig } from "gamedig";
 
 
 export const runtime = "nodejs";
-// Run the GameDig UDP query from Frankfurt, the closest available Vercel Function region to the Türkiye-hosted CS2 servers.
-export const preferredRegion = "fra1";
 export const dynamic = "force-dynamic";
 
 

@@ -646,7 +646,7 @@ text-white
 
 <p className="text-gray-500">
 
-Ping
+Sunucu Yanıtı
 
 </p>
 
